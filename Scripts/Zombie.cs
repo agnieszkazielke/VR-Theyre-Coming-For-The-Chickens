@@ -4,19 +4,8 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.AI;
 
-public class Zombie: MonoBehaviour, IArrowHittable
+public class Zombie: Enemy
 {
-
-
-    private GameObject player;
-
-    // Nav mesh travel
-    private NavMeshAgent agent;
-    private GameObject targetChicken;
-    private Vector3 roughDirection;
-
-    [SerializeField]
-    private bool destinationReached = false;
 
 
     // Audio
@@ -32,11 +21,10 @@ public class Zombie: MonoBehaviour, IArrowHittable
 
     // Target
 
-    private float forceAmount = 1.0f;
+  
     [SerializeField]
     private GameObject zombieBody;
     private Animator zombieAnim;
-    private bool zombieShot = false;
 
 
     // Material
@@ -49,30 +37,22 @@ public class Zombie: MonoBehaviour, IArrowHittable
     private float fadeSpeed = 0.5f;
     private bool fadeOut = false;
 
-    // Player Interaction
-
-    private float playerDistance;
-    private bool playerClose;
-    
+  
 
 
     // Start is called before the first frame update
     void Start()
     {
-        player = GameObject.Find("Player");
+        
         zombieAnim = zombieBody.GetComponent<Animator>();
-
-        // Navigation
+        player = GameObject.Find("Player");
 
         agent = GetComponent<NavMeshAgent>();
-        
-
 
         // Direct zombie to a random existing chicken
 
-        targetChicken = GameManager.Instance.chickens[Random.Range(0, (GameManager.Instance.chickens.Count))];
-        agent.SetDestination(targetChicken.transform.position);
-        roughDirection = targetChicken.transform.position - transform.position;
+        SetEnemyDestination();
+
         
 
         // Audio
@@ -87,39 +67,25 @@ public class Zombie: MonoBehaviour, IArrowHittable
 
     }
 
-    public void Hit(Arrow arrow)
+    override public void Hit(Arrow arrow)
 
 
     {
-        
-        ApplyForce(arrow.transform.forward);
-
 
         // Animate Death
-        
+
         zombieAnim.SetBool("shot", true);
-        zombieShot = true;
-        GameManager.Instance.SetScore((int)playerDistance);
+
+        // Fade zombie
 
         Invoke("FadeZombieTrigger", 3.0f);
 
-
-        // Message 
-
-        Debug.Log("Zombie shot!");
-
-        // Haptics
-
-        GameManager.Instance.SendHapticsLH();
+        base.Hit(arrow);
 
     }
 
 
-    private void ApplyForce(Vector3 direction)
-    {
-        Rigidbody rigidbody = GetComponent<Rigidbody>();
-        rigidbody.AddForce(direction * forceAmount);
-    }
+
 
     private void FadeZombieTrigger()
     {
@@ -136,63 +102,10 @@ public class Zombie: MonoBehaviour, IArrowHittable
 
     }
 
- 
-    public void CheckDestinationReached()
-    {
-        // Check if we've reached the destination - applies only to chickens
-
-        if (transform.position.x < 20 && transform.position.x > 0)
-        {
-            if (!agent.pathPending)
-            {
-                if (agent.remainingDistance <= agent.stoppingDistance)
-                {
-                    if (!agent.hasPath || agent.velocity.sqrMagnitude == 0f)
-                    {
-                        destinationReached = true;
-                    }
-                }
-
-                else
-                {
-                    destinationReached = false;
-                }
-            }
-
-            else
-            {
-                destinationReached = false;
-            }
-        }
-
-    }
-
-    public void CheckPlayerNear()
-
-    {
-        playerDistance = Vector3.Distance(transform.position, player.transform.position);
-
-        if (playerDistance < 5.0f)
-        {
-            playerClose = true;
-        }
-
-        else
-        {
-            playerClose = false;
-        }
-
-    }
 
 
-    private void SetPlayerDestination()
-    {
-        agent.SetDestination(player.transform.position);
-        agent.speed = 3.0f;
-    }
 
-
-    private void OnTriggerEnter(Collider other)
+    protected override void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Player"))
         {
@@ -201,11 +114,7 @@ public class Zombie: MonoBehaviour, IArrowHittable
         }
     }
 
-    private void PlayerEaten()
-    {
-        GameManager.Instance.playerEaten = true;
-        Debug.Log("Zombie has eaten you lol");
-    }
+
 
 
     // Update is called once per frame
@@ -214,7 +123,7 @@ public class Zombie: MonoBehaviour, IArrowHittable
         
         // HEADING 1: Zombie shot and dying
 
-        if (zombieShot)
+        if (enemyShot)
         {
             agent.isStopped = true;
         }
@@ -242,7 +151,7 @@ public class Zombie: MonoBehaviour, IArrowHittable
 
         // HEADING 2: Zombie alive navigating to destination
 
-        if (!zombieShot)
+        if (!enemyShot)
 
 
 
@@ -293,8 +202,7 @@ public class Zombie: MonoBehaviour, IArrowHittable
             // Animate zombie attack
             zombieAnim.SetBool("attack", true);
 
-            // move the zombie away from the chicken / player (WIP)
-            //transform.Translate(roughDirection.normalized.x, 0, -roughDirection.normalized.z);
+
             agent.isStopped = true;
             targetChicken.GetComponent<Chicken>().ChickenEaten();
 
@@ -318,7 +226,7 @@ public class Zombie: MonoBehaviour, IArrowHittable
 
 
             agent.SetDestination(targetChicken.transform.position);
-            roughDirection = targetChicken.transform.position - transform.position;
+            
 
         }
 
