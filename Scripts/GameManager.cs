@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+    // ENCAPSULATION
     public static GameManager Instance { get; set; }
 
     public bool isGameActive = false;
@@ -402,7 +403,7 @@ public class GameManager : MonoBehaviour
 
     // General game functions
 
-
+    // ABSTRACTION
 
     public void StartGame()
     {

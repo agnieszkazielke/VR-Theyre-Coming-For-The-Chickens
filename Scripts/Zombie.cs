@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.AI;
-
+// INHERITANCE
 public class Zombie: Enemy
 {
 
@@ -66,7 +66,7 @@ public class Zombie: Enemy
 
 
     }
-
+    // POLYMORPHISM
     override public void Hit(Arrow arrow)
 
 
@@ -104,7 +104,7 @@ public class Zombie: Enemy
 
 
 
-
+    // POLYMORPHISM
     protected override void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Player"))
